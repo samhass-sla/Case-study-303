@@ -14,6 +14,53 @@ const stepTitles = [
   'Contact and review',
 ]
 const currentTitle = computed(() => stepTitles[step.value - 1] ?? '')
+const subjectCopy = computed(() => {
+  const self = report.reporterType === 'self'
+  return {
+    step2Intro: self
+      ? 'Describe what you experienced. These examples are not confirmed Castelzor side effects.'
+      : 'Describe what the person experienced. These examples are not confirmed Castelzor side effects.',
+    experienceQuestion: self ? 'What did you experience?' : 'What did the person experience?',
+    otherSymptomQuestion: self
+      ? 'What other symptom or problem did you experience?'
+      : 'What other symptom or problem did the person experience?',
+    medicationProblemQuestion: self
+      ? 'Did you also have a medication or product problem?'
+      : 'Did the person also have a medication or product problem?',
+    eventDescriptionQuestion: self ? 'Tell us what happened to you' : 'Tell us what happened to the person',
+    onsetQuestion: self ? 'About when did it start for you?' : 'About when did it start for the person?',
+    ongoingQuestion: self ? 'Is it still happening to you?' : 'Is the person still experiencing it?',
+    endQuestion: self ? 'About when did it end for you?' : 'About when did it end for the person?',
+    soughtCareQuestion: self ? 'Did you seek medical care?' : 'Did the person seek medical care?',
+    seriousOutcomeQuestion: self
+      ? 'Did you experience a serious medical outcome, such as hospitalization or a life-threatening event?'
+      : 'Did the person experience a serious medical outcome, such as hospitalization or a life-threatening event?',
+    seriousDetailsQuestion: self
+      ? 'Tell us more about the serious medical event you experienced'
+      : 'Tell us more about the serious medical event the person experienced',
+    productStartQuestion: self ? 'When did you start taking Castelzor?' : 'When did the person start taking Castelzor?',
+    productStopQuestion: self ? 'When did you stop taking Castelzor?' : 'When did the person stop taking Castelzor?',
+    stillTakingLabel: self ? 'I am still taking Castelzor' : 'The person is still taking Castelzor',
+    contextIntro: self
+      ? 'These details may help a safety team understand your report; they do not show what caused your experience.'
+      : 'These details may help a safety team understand the person’s report; they do not show what caused the experience.',
+    aboutSubjectHeading: self ? 'About you' : 'About the person',
+    identifierLabel: self ? 'Your initials or demo identifier' : 'Patient initials or demo identifier',
+    ageLabel: self ? 'Your age or age range' : 'The person’s age or age range',
+    otherMedicinesQuestion: self
+      ? 'What other medicines or supplements do you take?'
+      : 'What other medicines or supplements does the person take?',
+    healthConditionsQuestion: self ? 'Do you have relevant health conditions?' : 'Does the person have relevant health conditions?',
+    otherContextQuestion: self
+      ? 'Anything else you think is relevant?'
+      : 'Anything else about the person that you think is relevant?',
+    reviewSubjectHeading: self ? 'About you' : 'About the person',
+    reviewIdentifierLabel: self ? 'Identifier' : 'Patient identifier',
+    reviewAgeLabel: self ? 'Age range' : 'Person’s age range',
+    reviewExperienceHeading: self ? 'Your experience' : 'The person’s experience',
+    stillTakingReview: self ? 'Still taking Castelzor' : 'The person is still taking Castelzor',
+  }
+})
 const symptomOptions = [
   { value: 'nausea', label: 'Nausea' },
   { value: 'headache', label: 'Headache' },
@@ -61,6 +108,13 @@ watch(
   },
 )
 
+watch(
+  () => report.reporterType,
+  (reporterType) => {
+    if (reporterType !== 'caregiver') report.relationship = ''
+  },
+)
+
 async function focusHeading() {
   await nextTick()
   document.querySelector<HTMLElement>('[data-step-heading]')?.focus()
@@ -88,6 +142,9 @@ function validateCurrentStep() {
 
   if (step.value === 1) {
     if (!report.reporterType) nextErrors.reporterType = 'Choose who is reporting.'
+  }
+
+  if (step.value === 5) {
     if (!report.patientIdentifier.trim()) nextErrors.patientIdentifier = 'Enter fictional initials or a demo identifier.'
     if (!report.ageRange) nextErrors.ageRange = 'Choose an age range, or select “I’m not sure.”'
     if (report.reporterType === 'caregiver' && !report.relationship.trim()) {
