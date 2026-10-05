@@ -14,4 +14,4 @@ Castelzor is fictional. This client-only case study explores the shape and langu
 
 ## Information architecture
 
-A welcome screen precedes six steps: reporter and patient, experience, chronology and outcomes, Castelzor details, other context, and contact plus review. A completion screen follows the local demo transition. Answers live only in reactive page memory.
+A welcome screen precedes six steps. Step 1 asks whether the reporter is reporting for themself or someone else; caregiver reports reveal a required relationship field before continuing. Steps 2–4 cover the experience, chronology and outcomes, and Castelzor details with copy personalized to “you” or “the person.” Step 5 collects the patient identifier, age or age range, and optional context. Step 6 collects fictional reporter contact details and provides an editable review. A completion screen follows the local demo transition. Answers live only in reactive page memory.

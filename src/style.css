@@ -292,6 +292,7 @@ input[aria-invalid='true'], select[aria-invalid='true'], textarea[aria-invalid='
 .required-dot { width: 5px; height: 5px; border-radius: 50%; background: #a05b45; }
 
 .review-content { gap: 0; }
+.context-subsection { display: grid; gap: 14px; padding-bottom: 20px; border-bottom: 1px solid #e5e2ea; }
 .review-section { padding: 17px 0 15px; border-bottom: 1px solid #e5e2ea; }
 .review-section:first-child { padding-top: 0; }
 .review-section-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 9px; }
@@ -300,6 +301,7 @@ input[aria-invalid='true'], select[aria-invalid='true'], textarea[aria-invalid='
 .edit-button span { font-size: 16px; font-weight: 400; }
 .review-list { display: grid; gap: 7px; margin: 0; }
 .review-list > div { display: grid; grid-template-columns: minmax(115px, 0.37fr) 1fr; gap: 12px; }
+.review-reporting-value { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .review-list dt { color: #77737f; font-size: 11px; }
 .review-list dd { min-width: 0; margin: 0; overflow-wrap: anywhere; color: #393541; font-size: 12px; line-height: 1.5; }
 .review-long-text { white-space: pre-wrap; }

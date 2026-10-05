@@ -41,6 +41,9 @@ const subjectCopy = computed(() => {
     productStartQuestion: self ? 'When did you start taking Castelzor?' : 'When did the person start taking Castelzor?',
     productStopQuestion: self ? 'When did you stop taking Castelzor?' : 'When did the person stop taking Castelzor?',
     stillTakingLabel: self ? 'I am still taking Castelzor' : 'The person is still taking Castelzor',
+    emergencyPrompt: self
+      ? 'If you are having a medical emergency, call 911 now.'
+      : 'If you or the person you’re reporting for is having a medical emergency, call 911 now.',
     contextIntro: self
       ? 'These details may help a safety team understand your report; they do not show what caused your experience.'
       : 'These details may help a safety team understand the person’s report; they do not show what caused the experience.',
@@ -142,14 +145,14 @@ function validateCurrentStep() {
 
   if (step.value === 1) {
     if (!report.reporterType) nextErrors.reporterType = 'Choose who is reporting.'
+    if (report.reporterType === 'caregiver' && !report.relationship.trim()) {
+      nextErrors.relationship = 'Tell us how you are related to the person.'
+    }
   }
 
   if (step.value === 5) {
     if (!report.patientIdentifier.trim()) nextErrors.patientIdentifier = 'Enter fictional initials or a demo identifier.'
     if (!report.ageRange) nextErrors.ageRange = 'Choose an age range, or select “I’m not sure.”'
-    if (report.reporterType === 'caregiver' && !report.relationship.trim()) {
-      nextErrors.relationship = 'Tell us how you know the person.'
-    }
   }
 
   if (step.value === 2) {
@@ -333,18 +336,18 @@ function displayDate(date: string, unknown: boolean) {
 
         <div v-if="step === 2 || step === 3" class="notice notice-emergency notice-compact">
           <span class="notice-symbol" aria-hidden="true">!</span>
-          <p><strong>If you are having a medical emergency, call 911 now.</strong> This form is not urgent care.</p>
+          <p><strong>{{ subjectCopy.emergencyPrompt }}</strong> This form is not urgent care.</p>
         </div>
 
         <section class="question-panel" :aria-labelledby="`step-heading-${step}`">
           <div class="question-heading">
             <p class="step-index">0{{ step }} <span>/</span> 06</p>
             <h1 :id="`step-heading-${step}`" data-step-heading tabindex="-1">{{ currentTitle }}</h1>
-            <p v-if="step === 1" class="question-intro">A few details help us understand who the report is about.</p>
-            <p v-else-if="step === 2" class="question-intro">Describe what you noticed. These examples are not confirmed Castelzor side effects.</p>
+            <p v-if="step === 1" class="question-intro">First, tell us who is completing the report.</p>
+            <p v-else-if="step === 2" class="question-intro">{{ subjectCopy.step2Intro }}</p>
             <p v-else-if="step === 3" class="question-intro">Approximate answers are okay. It’s fine to say you’re not sure.</p>
-            <p v-else-if="step === 4" class="question-intro">Share only the product details you know. Unknown details are okay.</p>
-            <p v-else-if="step === 5" class="question-intro">These details may help a safety team understand the report; they do not show what caused the experience.</p>
+            <p v-else-if="step === 4" class="question-intro">Share only the product details you know about {{ report.reporterType === 'self' ? 'yourself' : 'the person' }}. Unknown details are okay.</p>
+            <p v-else-if="step === 5" class="question-intro">{{ subjectCopy.contextIntro }}</p>
             <p v-else class="question-intro">Use fictional details only. Review what you entered before finishing the demo.</p>
           </div>
 
@@ -363,26 +366,8 @@ function displayDate(date: string, unknown: boolean) {
               </div>
               <p v-if="errors.reporterType" id="reporter-type-error" class="field-error" role="alert">{{ errors.reporterType }}</p>
             </fieldset>
-
-            <div class="field-grid">
-              <div class="form-group">
-                <label class="field-label" for="patient-identifier">Patient initials or demo identifier <span class="required-mark">Required</span></label>
-                <input id="patient-identifier" v-model="report.patientIdentifier" type="text" autocomplete="off" placeholder="For example, AB-17" :aria-invalid="Boolean(errors.patientIdentifier)" :aria-describedby="errors.patientIdentifier ? 'patient-identifier-error' : 'patient-identifier-help'">
-                <p v-if="errors.patientIdentifier" id="patient-identifier-error" class="field-error" role="alert">{{ errors.patientIdentifier }}</p>
-                <p v-else id="patient-identifier-help" class="field-help">Please don’t enter a real person’s initials.</p>
-              </div>
-              <div class="form-group">
-                <label class="field-label" for="age-range">Patient age or age range <span class="required-mark">Required</span></label>
-                <select id="age-range" v-model="report.ageRange" :aria-invalid="Boolean(errors.ageRange)" :aria-describedby="errors.ageRange ? 'age-range-error' : undefined">
-                  <option value="" disabled>Select an age range</option>
-                  <option value="Under 18">Under 18</option><option value="18–29">18–29</option><option value="30–44">30–44</option><option value="45–59">45–59</option><option value="60–74">60–74</option><option value="75 or older">75 or older</option><option value="I’m not sure">I’m not sure</option>
-                </select>
-                <p v-if="errors.ageRange" id="age-range-error" class="field-error" role="alert">{{ errors.ageRange }}</p>
-              </div>
-            </div>
-
             <div v-if="report.reporterType === 'caregiver'" class="form-group conditional-field">
-              <label class="field-label" for="relationship">How are you connected to the person? <span class="required-mark">Required</span></label>
+              <label class="field-label" for="relationship">How are you related to the person? <span class="required-mark">Required</span></label>
               <input id="relationship" v-model="report.relationship" type="text" autocomplete="off" placeholder="For example, family member or friend" :aria-invalid="Boolean(errors.relationship)" :aria-describedby="errors.relationship ? 'relationship-error' : undefined">
               <p v-if="errors.relationship" id="relationship-error" class="field-error" role="alert">{{ errors.relationship }}</p>
             </div>
@@ -402,13 +387,13 @@ function displayDate(date: string, unknown: boolean) {
             </fieldset>
 
             <div v-if="report.symptoms.includes('other')" class="form-group conditional-field">
-              <label class="field-label" for="other-symptom">What was the other symptom or problem? <span class="required-mark">Required</span></label>
+              <label class="field-label" for="other-symptom">{{ subjectCopy.otherSymptomQuestion }} <span class="required-mark">Required</span></label>
               <input id="other-symptom" v-model="report.otherSymptom" type="text" autocomplete="off" placeholder="Describe it in your own words" :aria-invalid="Boolean(errors.otherSymptom)" :aria-describedby="errors.otherSymptom ? 'other-symptom-error' : undefined">
               <p v-if="errors.otherSymptom" id="other-symptom-error" class="field-error" role="alert">{{ errors.otherSymptom }}</p>
             </div>
 
             <fieldset class="form-group product-problem-group" :aria-describedby="errors.medicationProblem ? 'medication-problem-error' : 'medication-problem-help'">
-              <legend class="field-label">Was there also a medication or product problem? <span class="required-mark">Required</span></legend>
+              <legend class="field-label">{{ subjectCopy.medicationProblemQuestion }} <span class="required-mark">Required</span></legend>
               <p id="medication-problem-help" class="field-help field-help-spaced"><em>For example, a mix-up, packaging issue, inappropriate dose, or difficulty using the product.</em></p>
               <div class="choice-row">
                 <label class="choice-card choice-card-small" :class="{ selected: report.medicationProblem === 'yes' }">
@@ -424,7 +409,7 @@ function displayDate(date: string, unknown: boolean) {
             </fieldset>
 
             <div v-if="report.medicationProblem === 'yes'" class="form-group conditional-field">
-              <label class="field-label" for="event-description">Tell us what happened <span class="required-mark">Required</span></label>
+              <label class="field-label" for="event-description">{{ subjectCopy.eventDescriptionQuestion }} <span class="required-mark">Required</span></label>
               <textarea id="event-description" v-model="report.eventDescription" rows="4" placeholder="Describe what happened in your own words. Please don’t include real names or contact details." :aria-invalid="Boolean(errors.eventDescription)" :aria-describedby="errors.eventDescription ? 'event-description-error' : undefined"></textarea>
               <p v-if="errors.eventDescription" id="event-description-error" class="field-error" role="alert">{{ errors.eventDescription }}</p>
             </div>
@@ -432,14 +417,14 @@ function displayDate(date: string, unknown: boolean) {
 
           <div v-else-if="step === 3" class="form-content">
             <div class="form-group">
-              <label class="field-label" for="onset-date">About when did it start? <span class="required-mark">Required, or choose not sure</span></label>
+              <label class="field-label" for="onset-date">{{ subjectCopy.onsetQuestion }} <span class="required-mark">Required, or choose not sure</span></label>
               <input id="onset-date" v-model="report.onsetDate" type="date" :disabled="report.onsetUnknown" :aria-invalid="Boolean(errors.onsetDate)" :aria-describedby="errors.onsetDate ? 'onset-date-error' : undefined">
               <p v-if="errors.onsetDate" id="onset-date-error" class="field-error" role="alert">{{ errors.onsetDate }}</p>
               <label class="inline-check"><input v-model="report.onsetUnknown" type="checkbox" @change="report.onsetUnknown && (report.onsetDate = '')"><span>I’m not sure</span></label>
             </div>
 
             <fieldset class="form-group" :aria-describedby="errors.patientStatus ? 'patient-status-error' : undefined">
-              <legend class="field-label">Is it still happening? <span class="required-mark">Required</span></legend>
+              <legend class="field-label">{{ subjectCopy.ongoingQuestion }} <span class="required-mark">Required</span></legend>
               <div class="choice-row choice-row-compact">
                 <label class="choice-card choice-card-small" :class="{ selected: report.patientStatus === 'ongoing' }"><input v-model="report.patientStatus" type="radio" name="patient-status" value="ongoing" :aria-invalid="Boolean(errors.patientStatus)"><span class="choice-check" aria-hidden="true"></span><strong>Yes, ongoing</strong></label>
                 <label class="choice-card choice-card-small" :class="{ selected: report.patientStatus === 'ended' }"><input v-model="report.patientStatus" type="radio" name="patient-status" value="ended" :aria-invalid="Boolean(errors.patientStatus)"><span class="choice-check" aria-hidden="true"></span><strong>No, it ended</strong></label>
@@ -447,12 +432,12 @@ function displayDate(date: string, unknown: boolean) {
               <p v-if="errors.patientStatus" id="patient-status-error" class="field-error" role="alert">{{ errors.patientStatus }}</p>
             </fieldset>
             <div v-if="report.patientStatus === 'ended'" class="form-group conditional-field">
-              <label class="field-label" for="end-date">About when did it end? <span class="optional-mark">Optional</span></label>
+              <label class="field-label" for="end-date">{{ subjectCopy.endQuestion }} <span class="optional-mark">Optional</span></label>
               <input id="end-date" v-model="report.endDate" type="date">
             </div>
 
             <fieldset class="form-group" :aria-describedby="errors.soughtCare ? 'sought-care-error' : undefined">
-              <legend class="field-label">Did the person seek medical care? <span class="required-mark">Required</span></legend>
+              <legend class="field-label">{{ subjectCopy.soughtCareQuestion }} <span class="required-mark">Required</span></legend>
               <div class="choice-row choice-row-compact">
                 <label v-for="answer in ['yes', 'no', 'unsure']" :key="answer" class="choice-card choice-card-small" :class="{ selected: report.soughtCare === answer }"><input v-model="report.soughtCare" type="radio" name="sought-care" :value="answer" :aria-invalid="Boolean(errors.soughtCare)"><span class="choice-check" aria-hidden="true"></span><strong>{{ answer === 'unsure' ? 'Not sure' : answer === 'yes' ? 'Yes' : 'No' }}</strong></label>
               </div>
@@ -460,7 +445,7 @@ function displayDate(date: string, unknown: boolean) {
             </fieldset>
 
             <fieldset class="form-group" :aria-describedby="errors.seriousEvent ? 'serious-event-error' : undefined">
-              <legend class="field-label">Did the person experience a serious medical outcome, such as hospitalization or a life-threatening event? <span class="required-mark">Required</span></legend>
+              <legend class="field-label">{{ subjectCopy.seriousOutcomeQuestion }} <span class="required-mark">Required</span></legend>
               <div class="choice-row choice-row-compact">
                 <label v-for="answer in ['yes', 'no', 'unsure']" :key="answer" class="choice-card choice-card-small" :class="{ selected: report.seriousEvent === answer }"><input v-model="report.seriousEvent" type="radio" name="serious-event" :value="answer" :aria-invalid="Boolean(errors.seriousEvent)"><span class="choice-check" aria-hidden="true"></span><strong>{{ answer === 'unsure' ? 'Not sure' : answer === 'yes' ? 'Yes' : 'No' }}</strong></label>
               </div>
@@ -469,7 +454,7 @@ function displayDate(date: string, unknown: boolean) {
                 <label v-for="outcome in seriousOutcomeOptions" :key="outcome.value" class="check-card check-card-wide" :class="{ selected: report.seriousOutcomes.includes(outcome.value) }"><input v-model="report.seriousOutcomes" type="checkbox" :value="outcome.value" :aria-invalid="Boolean(errors.seriousOutcomes)"><span class="check-box" aria-hidden="true"></span><span>{{ outcome.label }}</span></label>
                 <p v-if="errors.seriousOutcomes" class="field-error" role="alert">{{ errors.seriousOutcomes }}</p>
                 <div v-if="report.seriousOutcomes.includes('other-serious')" class="form-group conditional-field">
-                  <label class="field-label" for="serious-outcome-details">Tell us more about the serious medical event <span class="required-mark">Required</span></label>
+                  <label class="field-label" for="serious-outcome-details">{{ subjectCopy.seriousDetailsQuestion }} <span class="required-mark">Required</span></label>
                   <textarea id="serious-outcome-details" v-model="report.seriousOutcomeDetails" rows="3" placeholder="Add a few details in your own words." :aria-invalid="Boolean(errors.seriousOutcomeDetails)" :aria-describedby="errors.seriousOutcomeDetails ? 'serious-outcome-details-error' : undefined"></textarea>
                   <p v-if="errors.seriousOutcomeDetails" id="serious-outcome-details-error" class="field-error" role="alert">{{ errors.seriousOutcomeDetails }}</p>
                 </div>
@@ -485,14 +470,14 @@ function displayDate(date: string, unknown: boolean) {
             <div class="form-group"><label class="field-label" for="dose">Dose, if known <span class="optional-mark">Optional</span></label><input id="dose" v-model="report.dose" type="text" autocomplete="off" placeholder="For example, 10 mg"></div>
             <div class="field-grid">
               <div class="form-group">
-                <label class="field-label" for="product-start-date">When did the person start taking it? <span class="optional-mark">Optional</span></label>
+                <label class="field-label" for="product-start-date">{{ subjectCopy.productStartQuestion }} <span class="optional-mark">Optional</span></label>
                 <input id="product-start-date" v-model="report.productStartDate" type="date" :disabled="report.productStartUnknown" @change="report.productStartUnknown && (report.productStartDate = '')">
                 <label class="inline-check"><input v-model="report.productStartUnknown" type="checkbox" @change="report.productStartUnknown && (report.productStartDate = '')"><span>I’m not sure</span></label>
               </div>
               <div class="form-group">
-                <label class="field-label" for="product-stop-date">When did the person stop? <span class="optional-mark">Optional</span></label>
+                <label class="field-label" for="product-stop-date">{{ subjectCopy.productStopQuestion }} <span class="optional-mark">Optional</span></label>
                 <input id="product-stop-date" v-model="report.productStopDate" type="date" :disabled="report.productStopUnknown || report.productStillTaking" @change="report.productStopDate && (report.productStopUnknown = false, report.productStillTaking = false)">
-                <label class="inline-check"><input type="checkbox" :checked="report.productStillTaking" @change="setProductStillTaking"><span>The person is still taking Castelzor</span></label>
+                <label class="inline-check"><input type="checkbox" :checked="report.productStillTaking" @change="setProductStillTaking"><span>{{ subjectCopy.stillTakingLabel }}</span></label>
                 <label class="inline-check"><input type="checkbox" :checked="report.productStopUnknown" @change="setProductStopUnknown"><span>I’m not sure</span></label>
               </div>
             </div>
@@ -504,29 +489,48 @@ function displayDate(date: string, unknown: boolean) {
           </div>
 
           <div v-else-if="step === 5" class="form-content">
+            <section class="context-subsection" aria-labelledby="subject-context-heading">
+              <div class="review-section-heading"><h2 id="subject-context-heading">{{ subjectCopy.aboutSubjectHeading }}</h2></div>
+              <div class="field-grid">
+                <div class="form-group">
+                  <label class="field-label" for="patient-identifier">{{ subjectCopy.identifierLabel }} <span class="required-mark">Required</span></label>
+                  <input id="patient-identifier" v-model="report.patientIdentifier" type="text" autocomplete="off" placeholder="For example, AB-17" :aria-invalid="Boolean(errors.patientIdentifier)" :aria-describedby="errors.patientIdentifier ? 'patient-identifier-error' : 'patient-identifier-help'">
+                  <p v-if="errors.patientIdentifier" id="patient-identifier-error" class="field-error" role="alert">{{ errors.patientIdentifier }}</p>
+                  <p v-else id="patient-identifier-help" class="field-help">Please don’t enter a real person’s initials.</p>
+                </div>
+                <div class="form-group">
+                  <label class="field-label" for="age-range">{{ subjectCopy.ageLabel }} <span class="required-mark">Required</span></label>
+                  <select id="age-range" v-model="report.ageRange" :aria-invalid="Boolean(errors.ageRange)" :aria-describedby="errors.ageRange ? 'age-range-error' : undefined">
+                    <option value="" disabled>Select an age range</option>
+                    <option value="Under 18">Under 18</option><option value="18–29">18–29</option><option value="30–44">30–44</option><option value="45–59">45–59</option><option value="60–74">60–74</option><option value="75 or older">75 or older</option><option value="I’m not sure">I’m not sure</option>
+                  </select>
+                  <p v-if="errors.ageRange" id="age-range-error" class="field-error" role="alert">{{ errors.ageRange }}</p>
+                </div>
+              </div>
+            </section>
             <div class="form-group">
-              <label class="field-label" for="other-medicines">Other medicines or supplements <span class="optional-mark">Optional</span></label>
+              <label class="field-label" for="other-medicines">{{ subjectCopy.otherMedicinesQuestion }} <span class="optional-mark">Optional</span></label>
               <textarea id="other-medicines" v-model="report.otherMedicines" rows="3" placeholder="Include only details you’re comfortable sharing as fictional demo information."></textarea>
             </div>
             <div class="form-group">
-              <label class="field-label" for="health-conditions">Relevant health conditions <span class="optional-mark">Optional</span></label>
+              <label class="field-label" for="health-conditions">{{ subjectCopy.healthConditionsQuestion }} <span class="optional-mark">Optional</span></label>
               <textarea id="health-conditions" v-model="report.healthConditions" rows="3" placeholder="For example, a condition that may help explain the timing."></textarea>
             </div>
             <div class="form-group">
-              <label class="field-label" for="other-context">Anything else you think matters? <span class="optional-mark">Optional</span></label>
+              <label class="field-label" for="other-context">{{ subjectCopy.otherContextQuestion }} <span class="optional-mark">Optional</span></label>
               <textarea id="other-context" v-model="report.otherContext" rows="4" placeholder="Add any other fictional details you’d like included."></textarea>
             </div>
           </div>
 
           <div v-else-if="step === 6" class="form-content review-content">
             <section class="review-section" aria-labelledby="review-patient-heading">
-              <div class="review-section-heading"><h2 id="review-patient-heading">Patient and reporter</h2><button class="text-button edit-button" type="button" @click="editStep(1)">Edit <span aria-hidden="true">↗</span></button></div>
-              <dl class="review-list"><div><dt>Reporting</dt><dd>{{ report.reporterType === 'self' ? 'For myself' : 'For someone else' }}</dd></div><div><dt>Patient identifier</dt><dd>{{ report.patientIdentifier }}</dd></div><div><dt>Age range</dt><dd>{{ report.ageRange }}</dd></div><div v-if="report.relationship"><dt>Relationship</dt><dd>{{ report.relationship }}</dd></div></dl>
+              <div class="review-section-heading"><h2 id="review-patient-heading">{{ subjectCopy.reviewSubjectHeading }}</h2><button class="text-button edit-button" type="button" @click="editStep(5)">Edit <span aria-hidden="true">↗</span></button></div>
+              <dl class="review-list"><div><dt>Reporting</dt><dd class="review-reporting-value"><span>{{ report.reporterType === 'self' ? 'For myself' : 'For someone else' }}</span><button class="text-button edit-button" type="button" aria-label="Edit who is reporting" @click="editStep(1)">Edit</button></dd></div><div><dt>{{ subjectCopy.reviewIdentifierLabel }}</dt><dd>{{ report.patientIdentifier }}</dd></div><div><dt>{{ subjectCopy.reviewAgeLabel }}</dt><dd>{{ report.ageRange }}</dd></div><div v-if="report.relationship"><dt>Relationship</dt><dd>{{ report.relationship }}</dd></div></dl>
             </section>
 
             <section class="review-section" aria-labelledby="review-event-heading">
-              <div class="review-section-heading"><h2 id="review-event-heading">What happened</h2><button class="text-button edit-button" type="button" @click="editStep(2)">Edit <span aria-hidden="true">↗</span></button></div>
-              <dl class="review-list"><div><dt>Experience</dt><dd>{{ selectedSymptoms().join(', ') || 'Not provided' }}</dd></div><div><dt>Medication or product problem</dt><dd>{{ report.medicationProblem === 'yes' ? 'Yes' : 'No' }}</dd></div><div v-if="report.medicationProblem === 'yes' && report.eventDescription"><dt>In their words</dt><dd class="review-long-text">{{ report.eventDescription }}</dd></div></dl>
+              <div class="review-section-heading"><h2 id="review-event-heading">{{ subjectCopy.reviewExperienceHeading }}</h2><button class="text-button edit-button" type="button" @click="editStep(2)">Edit <span aria-hidden="true">↗</span></button></div>
+              <dl class="review-list"><div><dt>Experience</dt><dd>{{ selectedSymptoms().join(', ') || 'Not provided' }}</dd></div><div><dt>Medication or product problem</dt><dd>{{ report.medicationProblem === 'yes' ? 'Yes' : 'No' }}</dd></div><div v-if="report.medicationProblem === 'yes' && report.eventDescription"><dt>{{ report.reporterType === 'self' ? 'In your words' : 'In the person’s words' }}</dt><dd class="review-long-text">{{ report.eventDescription }}</dd></div></dl>
             </section>
 
             <section class="review-section" aria-labelledby="review-timing-heading">
@@ -536,7 +540,7 @@ function displayDate(date: string, unknown: boolean) {
 
             <section class="review-section" aria-labelledby="review-product-heading">
               <div class="review-section-heading"><h2 id="review-product-heading">About Castelzor</h2><button class="text-button edit-button" type="button" @click="editStep(4)">Edit <span aria-hidden="true">↗</span></button></div>
-              <dl class="review-list"><div><dt>Dose</dt><dd>{{ report.dose || 'Not provided' }}</dd></div><div><dt>Started</dt><dd>{{ displayDate(report.productStartDate, report.productStartUnknown) }}</dd></div><div><dt>Stopped</dt><dd>{{ report.productStillTaking ? 'Still taking Castelzor' : displayDate(report.productStopDate, report.productStopUnknown) }}</dd></div><div><dt>Lot number</dt><dd>{{ report.lotUnknown ? 'I don’t know or don’t have the package' : report.lotNumber || 'Not provided' }}</dd></div></dl>
+              <dl class="review-list"><div><dt>Dose</dt><dd>{{ report.dose || 'Not provided' }}</dd></div><div><dt>Started</dt><dd>{{ displayDate(report.productStartDate, report.productStartUnknown) }}</dd></div><div><dt>Stopped</dt><dd>{{ report.productStillTaking ? subjectCopy.stillTakingReview : displayDate(report.productStopDate, report.productStopUnknown) }}</dd></div><div><dt>Lot number</dt><dd>{{ report.lotUnknown ? 'I don’t know or don’t have the package' : report.lotNumber || 'Not provided' }}</dd></div></dl>
             </section>
 
             <section class="review-section" aria-labelledby="review-context-heading">
@@ -594,7 +598,7 @@ function displayDate(date: string, unknown: boolean) {
       <section v-else class="completion-layout" aria-labelledby="completion-heading">
         <div class="completion-mark" aria-hidden="true"><span></span><span></span></div>
         <p class="eyebrow"><span class="eyebrow-line"></span> Demo complete</p>
-        <h1 id="completion-heading" data-step-heading tabindex="-1">No report was sent.</h1>
+        <h1 id="completion-heading" data-step-heading tabindex="-1">No report was sent. But the demo was successfully completed.</h1>
         <p class="completion-lede">Thank you for walking through the Castelzor reporting experience. Your answers were used only in this on-screen demonstration and were not sent to Castelzor’s safety team or the FDA.</p>
         <div class="real-service-note">
           <p class="demo-label">In a real Castelzor service</p>
