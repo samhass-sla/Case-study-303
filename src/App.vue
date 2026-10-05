@@ -390,7 +390,7 @@ function displayDate(date: string, unknown: boolean) {
 
           <div v-else-if="step === 2" class="form-content">
             <fieldset class="form-group" :aria-describedby="errors.symptoms ? 'symptoms-error' : 'symptoms-help'">
-              <legend class="field-label">What did the person experience? <span class="required-mark">Required · choose all that apply</span></legend>
+              <legend class="field-label">{{ subjectCopy.experienceQuestion }} <span class="required-mark">Required · choose all that apply</span></legend>
               <p id="symptoms-help" class="field-help field-help-spaced">Examples only. Select all that apply, or choose “No symptoms to report.”</p>
               <div class="symptom-grid">
                 <label v-for="option in symptomOptions" :key="option.value" class="check-card" :class="{ selected: report.symptoms.includes(option.value), 'check-card-other': option.value === 'other', 'check-card-none': option.value === 'none' }">
