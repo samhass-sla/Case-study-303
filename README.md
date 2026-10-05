@@ -2,22 +2,14 @@
 
 A mobile-first Vue 3 + TypeScript prototype for a patient or caregiver to describe a possible experience while taking Castelzor, a fictional prescription medicine. The six-step flow demonstrates patient-centered safety reporting; it is not an operational reporting service.
 
-## Run locally
+The goal is to demonstrate thoughtful patient-centered design for an important mobile task, not to claim that this prototype is an operational medical or regulatory reporting system.
 
-Requires Node.js 20.19+ or 22.12+.
+## User, context, and job to be done
 
-```sh
-npm install
-npm run dev
-```
+**Primary user:** A patient taking Castelzor who notices a symptom or other possible problem and wants to make sure it is documented. A caregiver reporting on someone's behalf is a supported variation.
 
-Create a production build with `npm run build`, then preview it with `npm run preview`.
+The user may be concerned, tired, uncertain about dates or medication details, and using a phone with one hand. They may not know whether Castelzor caused the event; the form should let them report an observation without making a medical judgment.
 
-## Safety and data boundaries
+**Job to be done:** “Help me describe what happened, provide the details I know, and understand what happens after I finish.”
 
-- Castelzor and all requested example details are fictional. Enter made-up information only.
-- No answers are sent to a server, analytics service, or the FDA. The report exists only in Vue memory and clears on reload or Start over.
-- The experience does not provide medical advice or urgent care. An emergency notice remains available near the event and outcome questions.
-- A completed flow means only that the demonstration ended. It is not a filed report, case confirmation, or promise of follow-up.
-
-See [content and safety decisions](docs/content-and-safety-decisions.md), [project context](docs/context.md), and [requirements](docs/requirements.md). The original case-study specification is in [BRIEF.md](BRIEF.md).
+Assume a fictional U.S. post-market prescription medicine, not a clinical-trial product. If the scenario changes, revisit the reporting pathway and language before building.
